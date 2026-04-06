@@ -1,5 +1,7 @@
 # Group project: Collaborative Task Management Web App
+
 **Course:** BIT
+
 **University:** The Co-operative University of Kenya
 
 ## The Team
