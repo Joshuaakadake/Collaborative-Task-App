@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TaskMaster Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+<div class="header-row">
+<button onclick="toggleTheme()" id="theme-btn">🌙</button>
+<div id="user-profile" style="display:none;">
+<img id="user-avatar" src="" alt="avatar">
+<span id="welcome-msg"></span>
+</div>
+</div>
+
+<div id="auth-container">
+<h1>TaskMaster</h1>
+<input type="text" id="reg-user" placeholder="Username">
+<input type="email" id="reg-email" placeholder="Email">
+<input type="password" id="reg-password" placeholder="Password">
+<button onclick="register()" class="btn-primary">Create Account</button>
+<hr>
+<input type="email" id="login-email" placeholder="Login Email">
+<input type="password" id="login-password" placeholder="Login Password">
+<button onclick="login()" class="btn-success">Login</button>
+</div>
+
+<div id="task-section" style="display:none;">
+<div class="search-bar">
+<input type="text" id="searchInput" onkeyup="filterTasks()" placeholder="Search tasks...">
+</div>
+
+<div class="add-task-box">
+<input type="text" id="task-title" placeholder="Title">
+<textarea id="task-desc" placeholder="Details"></textarea>
+<div class="row">
+<select id="task-category">
+<option value="General">General</option>
+<option value="Work">Work</option>
+<option value="Personal">Personal</option>
+<option value="Urgent">Urgent</option>
+</select>
+<input type="date" id="task-date">
+</div>
+<button onclick="addTask()" class="btn-success">Add Task</button>
+</div>
+
+<ul id="task-list"></ul>
+<button onclick="logout()" class="btn-secondary">Logout</button>
+</div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
+
