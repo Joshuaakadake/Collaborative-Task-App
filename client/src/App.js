@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import io from 'socket.io-client';
 
-function App() {
+const socket = io('http://localhost:5000'); // Connects to your backend
+
+function App() {const [comments, setComments] = useState([]); // Stores comments for each task
+  const [newComment, setNewComment] = useState(""); // Stores what you are typing
+
   const [tasks, setTasks] = useState([]);
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [user, setUser] = useState(null);
@@ -9,28 +14,28 @@ function App() {
   const [loginPassword, setLoginPassword] = useState('');
   const [registerForm, setRegisterForm] = useState({ username: '', email: '', password: '' });
   const [newTask, setNewTask] = useState({ title: '', description: '', assigned_to: '' });
+  const [loading, setLoading] = useState(true);
 
   // Configure axios to always send the token
   axios.defaults.baseURL = 'http://localhost:5000';
   if (token) {
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   }
+   const fetchTasks = async () => {
+  setLoading(true);
+  try {
+    const res = await axios.get('http://localhost:5000/api/tasks');
+    setTasks(res.data); 
+  } catch (err) {
+    console.error("Failed to fetch tasks:", err);
+  } 
+  setLoading(false);
+};
 
   // Load tasks when component starts or token changes
   useEffect(() => {
-    if (token) {
-      fetchTasks();
-    }
-  }, [token]);
-
-  const fetchTasks = async () => {
-    try {
-      const res = await axios.get('/api/tasks');
-      setTasks(res.data);
-    } catch (err) {
-      console.error('Failed to fetch tasks', err);
-    }
-  };
+  fetchTasks();
+}, [token]); 
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -66,13 +71,17 @@ function App() {
 
   const handleCreateTask = async (e) => {
     e.preventDefault();
+    if (!newTask.title.trim()) return;
     try {
-      await axios.post('/api/tasks', newTask);
+      await axios.post('http://localhost:5000/api/tasks', newTask);
       setNewTask({ title: '', description: '', assigned_to: '' });
       fetchTasks();
-      alert('Task created!');
+      fetchStats();
+
+      showMessage('Task created successfully!', 'success');
+      setIsModalOpen(false);
     } catch (err) {
-      alert('Failed to create task');
+      showMessage('Failed to create task', 'error');
     }
   };
 
@@ -95,12 +104,12 @@ function App() {
       }
     }
   };
-
+ 
   // If not logged in, show login/register screen
   if (!token) {
     return (
       <div style={{ padding: '20px', maxWidth: '800px', margin: 'auto' }}>
-        <h1>Collaborative Task Manager</h1>
+        <h1>Testing Refresh</h1>
         
         <div style={{ display: 'flex', gap: '40px', marginTop: '20px' }}>
           {/* Login Form */}
@@ -167,6 +176,22 @@ function App() {
     );
   }
 
+   const handleAddComment = async (taskId) => {
+    if (!newComment.trim()) return;
+    try {
+      await axios.post(`http://localhost:5000/api/tasks/${taskId}/comments`, { 
+        user_id: user?.id || 1, 
+        comment: newComment 
+      });
+      setNewComment(""); 
+      fetchTasks();
+      // Refresh logic would go here
+    } catch (err) {
+      console.error("FULL ERROR DETAILS:", err.response?.data || err.message);
+    }
+  };
+
+
   // Logged in view - show tasks
   return (
     <div style={{ padding: '20px', maxWidth: '900px', margin: 'auto' }}>
@@ -221,8 +246,36 @@ function App() {
               Status: <strong>{task.status}</strong> | 
               Assigned to: {task.assigned_to_name || 'Unassigned'} |
               Due: {task.due_date || 'No due date'}
-            </p>
+              </p>
+            {/* --- START OF TEST BLOCK --- */}
+<div style={{ backgroundColor: '#fff9c4', padding: '10px', marginTop: '10px', borderRadius: '5px', border: '1px solid #fbc02d' }}>
+    <h5 style={{ margin: '0 0 5px 0' }}>Comments Section</h5>
+    {task.comments && task.comments.length > 0 ? (
+        task.comments || [].map((c, i) => (
+            <div key={i} style={{ borderBottom: '1px solid #ddd', padding: '5px 0' }}>
+                <strong>{c.username || 'User'}:</strong> 
+                <span>{c.comment || ''}</span>
+            </div>
+        ))
+    ) : (
+        <p style={{ fontSize: '12px', color: '#666' }}>No comments recorded in database.</p>
+    )}
+</div>
+{/* --- END OF TEST BLOCK --- */}
             <div>
+            {/* Visual Comment Box */}
+<div style={{ marginTop: '10px', padding: '10px', background: '#f4f4f4' }}>
+  <h6>Comments</h6>
+  <input 
+    type="text" 
+    placeholder="Write a comment..." 
+    value={newComment}
+    onChange={(e) => setNewComment(e.target.value)}
+    style={{ width: '70%', marginRight: '5px' }} 
+  />
+  {/* The Send Button (The postman) */}
+  <button onClick={() => handleAddComment(task.id)}>Send</button>
+</div>
               <select 
                 onChange={(e) => updateTaskStatus(task.id, e.target.value)}
                 value={task.status}
